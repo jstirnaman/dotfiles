@@ -15,37 +15,48 @@ CURRENT_SESSION=${PWD##*/}
 #	        exit 1;
 #	fi
 
-	# Start up the tmux session with specific name
-	tmux new-session -d -s $CURRENT_SESSION
+# Start up the tmux session with specific name
+tmux new-session -d -s $CURRENT_SESSION
 
-	# VIM window
-	tmux rename-window -t $CURRENT_SESSION:1 vim
-	tmux split-window -h
-	tmux select-pane -t 0
-	tmux resize-pane -R 20
-	tmux send-keys 'vim' 'C-m'
+# VIM window
+tmux rename-window -t $CURRENT_SESSION:1 proj 
 
-        tmux select-pane -t 1
-        tmux split-window -v
-	tmux select-pane -t 2
-	tmux send-keys 'pry' 'C-m'
-        tmux select-pane -t 0
-	# Window for running development server
-	tmux new-window
-	tmux rename-window server
-	tmux send-keys 'bundle exec rake sunspot:start' 'C-m'
-	tmux send-keys 'bundle exec rails s' 'C-m'
+tmux split-window -h
 
-	open -a "Google Chrome" --args 'http://127.0.0.1:3000'
-	open -a "Github"
-	open -a "Slack"
-        
-	# Window for logs
-        tmux new-window -t $CURRENT_SESSION -a -n logs
-        tmux split-window -v
-        tmux select-pane -t 0
-	# Select the first window
-	tmux select-window -t 0
+# With pane numbering starting at 1
+tmux split-window -h
+tmux select-pane -t 1 
+tmux resize-pane -L 20
+tmux send-keys 'bundle exec rails c' 'C-m'
 
-	# Attach the tmux session
-	tmux attach -t $CURRENT_SESSION
+tmux select-pane -t 2
+tmux send-keys 'vim' 'C-m'
+tmux send-keys ':Gstatus' 'C-m'
+
+tmux select-pane -t 3
+tmux split-window -v
+
+tmux select-pane -t 4 
+tmux send-keys 'bundle exec rails c' 'C-m'
+tmux select-pane -t 1
+tmux split-window -v
+
+# Window for running development server
+tmux new-window
+tmux rename-window server
+tmux send-keys 'postgres -D /usr/local/var/postgres'
+tmux send-keys 'bundle exec rake sunspot:start' 'C-m'
+tmux send-keys 'bundle exec rails s -b 0.0.0.0' 'C-m'
+
+open -a "Google Chrome" --args 'http://127.0.0.1:3000' 'https://plus.google.com/hangouts'
+open -a "Github Desktop"
+open -a "Slack"
+
+# Window for logs
+#tmux new-window -t $CURRENT_SESSION -a -n logs
+
+# Select the first window
+tmux select-window -t proj
+
+# Attach the tmux session
+tmux attach -t $CURRENT_SESSION
