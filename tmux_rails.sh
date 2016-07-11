@@ -29,16 +29,7 @@ tmux select-pane -t 1
 tmux resize-pane -L 20
 tmux send-keys 'bundle exec rails c' 'C-m'
 
-tmux select-pane -t 2
-tmux send-keys 'vim' 'C-m'
-tmux send-keys ':Gstatus' 'C-m'
-
 tmux select-pane -t 3
-tmux split-window -v
-
-tmux select-pane -t 4 
-tmux send-keys 'bundle exec rails c' 'C-m'
-tmux select-pane -t 1
 tmux split-window -v
 
 # Window for running development server
