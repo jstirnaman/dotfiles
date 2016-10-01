@@ -27,7 +27,7 @@ tmux split-window -h
 tmux split-window -h
 tmux select-pane -t 1 
 tmux resize-pane -L 20
-tmux send-keys 'bundle exec rails c' 'C-m'
+# tmux send-keys 'bundle exec rails c' 'C-m'
 
 tmux select-pane -t 3
 tmux split-window -v
@@ -36,11 +36,11 @@ tmux split-window -v
 tmux new-window
 tmux rename-window server
 tmux send-keys 'postgres -D /usr/local/var/postgres'
-tmux send-keys 'bundle exec rake sunspot:start' 'C-m'
-tmux send-keys 'bundle exec rails s -b 0.0.0.0' 'C-m'
+# tmux send-keys 'bundle exec rake sunspot:start' 'C-m'
+# tmux send-keys 'bundle exec rails s -b 0.0.0.0' 'C-m'
 
 open -a "Google Chrome" --args 'http://127.0.0.1:3000' 'https://plus.google.com/hangouts'
-open -a "Github Desktop"
+# open -a "Github Desktop"
 open -a "Slack"
 
 # Window for logs

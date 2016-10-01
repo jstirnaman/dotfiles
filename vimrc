@@ -57,7 +57,7 @@ filetype plugin indent on    " required
 
 " Syntax
 syntax on
-" set expandtab
+set expandtab
 autocmd Filetype gitcommit setlocal spell textwidth=76
 autocmd Filetype html setlocal ts=2 sts=2 sw=2
 autocmd Filetype javascript setlocal ts=2 sts=2 sw=2
