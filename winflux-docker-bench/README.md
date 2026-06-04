@@ -242,6 +242,24 @@ Docker Desktop WSL Integration isn't enabled (or got disabled). Open
 Docker Desktop → Settings → Resources → WSL Integration → enable for
 Ubuntu-24.04 → Apply & Restart. Then `wsl --shutdown` and re-open Ubuntu.
 
+### `docker compose up` / `docker pull` fails looking for credentials
+
+When you drive Docker inside WSL over a non-interactive SSH session (e.g.
+`ssh dockerhost-wsl` from the Mac), Docker may try to invoke a credential
+helper (the `credsStore` / `credHelpers` entries in `~/.docker/config.json`)
+*before* pulling even a public image, and fail because the helper can't run
+in that context. The error is about credentials, not the image itself.
+
+Fix: give the WSL user a `~/.docker/config.json` with an empty `auths`
+object and no credential helper, so Docker stops looking for credentials it
+doesn't need (public images like `influxdb:3-core` require no auth):
+
+```bash
+# inside WSL Ubuntu
+mkdir -p ~/.docker
+echo '{"auths": {}}' > ~/.docker/config.json
+```
+
 ### InfluxDB Core port unreachable from the Mac
 
 `localhost:8282` works from inside WSL but `dockerhost.local:8282` hangs
