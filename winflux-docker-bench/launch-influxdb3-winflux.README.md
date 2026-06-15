@@ -1,8 +1,8 @@
 # launch-influxdb3-winflux — Mac-side workflow
 
-One-shot launcher for the InfluxDB 3 Core test stack running on the **winflux**
-Windows host (Docker Desktop + WSL2 Ubuntu). Run it from the Mac; it handles the
-SSH → WSL → Docker plumbing for you.
+One-shot launcher for the InfluxDB 3 **Core and/or Enterprise** test stack
+running on the **winflux** Windows host (Docker Desktop + WSL2 Ubuntu). Run it
+from the Mac; it handles the SSH → WSL → Docker plumbing for you.
 
 The canonical Windows-side runbook and the in-WSL scripts live in
 [`jstirnaman/dotfiles/winflux-docker-bench`](https://github.com/jstirnaman/dotfiles/tree/master/winflux-docker-bench).
@@ -10,24 +10,39 @@ This script is the Mac-side companion to that repo's `bring_up_influx.sh`.
 
 ## What the script does
 
-1. **Brings up Core (non-interactive).** Runs the host's
-   `~/bin/bring_up_influx.sh` inside WSL over SSH — no interactive shell, no
-   manual `wsl` / `docker compose` steps.
-2. **Pulls the admin token to the Mac.** Copies the Core admin token JSON from
-   the host to `~/.influxdb3-core-admin-token.json` (mode 600). Core runs
-   token-authenticated, so the CLI needs this.
-3. **Opens an SSH tunnel.** Forwards `localhost:8282` on the Mac to Core on the
-   host, so the `influxdb3` CLI and `curl` work locally without changing the
-   Windows firewall.
+For each selected edition (Core, Enterprise, or both):
 
-Core publishes `8282:8181` on the host (host `8282` → container `8181`).
+1. **Brings it up (non-interactive).** Runs the host's `~/bin/bring_up_influx.sh`
+   inside WSL over SSH with the right compose services — no interactive shell, no
+   manual `wsl` / `docker compose` steps.
+2. **Pulls the token to the Mac.** Copies the edition's token file from the host
+   (mode 600): Core's admin token (`~/.influxdb3-core-admin-token.json`) and/or
+   Enterprise's permission tokens (`~/.influxdb3-enterprise-permission-tokens.json`).
+3. **Opens an SSH tunnel.** Forwards the edition's port to the Mac so the
+   `influxdb3` CLI and `curl` work locally without changing the Windows firewall.
+
+Ports (host → container): Core `8282:8181`, Enterprise `8181:8181`. The tunnels
+expose Core at `localhost:8282` and Enterprise at `localhost:8181` on the Mac.
 
 ## Usage
 
 ```bash
-./launch-influxdb3-winflux.sh          # bring up Core, pull token, open tunnel
-./launch-influxdb3-winflux.sh --down   # close the tunnel
+./launch-influxdb3-winflux.sh                # Core only (default)
+./launch-influxdb3-winflux.sh --core         # Core only
+./launch-influxdb3-winflux.sh --enterprise   # Enterprise only
+./launch-influxdb3-winflux.sh --both          # Core + Enterprise
+./launch-influxdb3-winflux.sh --down         # close all tunnels
 ```
+
+### Enterprise prerequisites
+
+Enterprise won't start unless these exist on the host first:
+
+- `INFLUXDB3_ENTERPRISE_LICENSE_EMAIL` set in the compose `.env`.
+- `~/.influxdb3-enterprise-permission-tokens.json` present (the compose secret).
+
+Bring up Core first if you only have Core configured; add Enterprise once its
+license email and permission-tokens file are in place.
 
 After it runs, test from the Mac:
 

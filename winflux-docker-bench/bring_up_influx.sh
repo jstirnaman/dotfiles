@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Bring up your stack's compose services (InfluxDB 3 Core) on the host.
+# Bring up your stack's compose services (InfluxDB 3 Core / Enterprise) on the host.
 # Run inside WSL2 Ubuntu (e.g., after `ssh dockerhost-wsl`).
 # Idempotent: safe to run anytime; already-running services are left alone.
 #
 # Configure via environment (defaults are placeholders):
 #   ORG         GitHub org/owner the stack repo was cloned under (default: your-org)
 #   STACK_REPO  repo dir under ~/src/$ORG that holds the compose file (default: your-stack-repo)
-#   SERVICE     compose service to bring up (default: influxdb3-core)
+#   SERVICES    space-separated compose services to bring up
+#               (default: influxdb3-core; e.g. "influxdb3-core influxdb3-enterprise")
+#   SERVICE     deprecated single-service alias, still honored for back-compat
 #
 # Recommended placement: copy to ~/bin/bring_up_influx.sh once, then just
 # run `bring_up_influx.sh` after reboots or whenever you need the stack.
@@ -15,7 +17,7 @@ set -euo pipefail
 
 ORG="${ORG:-your-org}"
 STACK_REPO="${STACK_REPO:-your-stack-repo}"
-SERVICE="${SERVICE:-influxdb3-core}"
+SERVICES="${SERVICES:-${SERVICE:-influxdb3-core}}"
 
 REPO="$HOME/src/$ORG/$STACK_REPO"
 ENV_FILE="$REPO/.env"
@@ -42,9 +44,10 @@ fi
 if [[ ! -f "$ENV_FILE" ]]; then
     cat > "$ENV_FILE" <<'ENV'
 # Picked up automatically by docker compose in this directory.
-INFLUXDB3_NODE_IDENTIFIER_PREFIX=dockerhost-core
-# Pin the Core image tag. Override to a specific tag for reproducibility.
+INFLUXDB3_NODE_IDENTIFIER_PREFIX=influxdb3
+# Pin image tags. Override to specific quay.io RC tags for pre-release testing.
 INFLUXDB3_CORE_IMAGE=influxdb:3-core
+INFLUXDB3_ENTERPRISE_IMAGE=influxdb:3-enterprise
 ENV
     echo "Wrote $ENV_FILE"
 fi
@@ -52,8 +55,9 @@ fi
 cd "$REPO"
 
 echo ""
-echo "Bringing up $SERVICE..."
-docker compose up -d "$SERVICE"
+echo "Bringing up: $SERVICES"
+# shellcheck disable=SC2086  # intentional word-splitting of the service list
+docker compose up -d $SERVICES
 
 echo ""
 echo "Current state:"
@@ -61,19 +65,35 @@ docker compose ps
 
 echo ""
 echo "Recent logs:"
-docker compose logs --tail=20 "$SERVICE"
+for s in $SERVICES; do
+    echo "--- $s ---"
+    docker compose logs --tail=20 "$s"
+done
 
-# Inside-Ubuntu health probe
-echo ""
-echo "Health probe (from inside WSL):"
-if curl -fsS --max-time 5 http://localhost:8282/health; then
-    echo ""
-    echo "OK: Core is responding on localhost:8282"
-else
-    echo "WARN: localhost:8282/health did not respond. Give it 10s and retry,"
-    echo "      or check 'docker compose logs $SERVICE' for errors."
-fi
+# Per-service health probe. Core is published on 8282, Enterprise on 8181.
+# Auth is enabled, so an unauthenticated /health returns 401 — that still means
+# the server is up, so 200 and 401 both count as healthy.
+health_port() {
+    case "$1" in
+        influxdb3-core)       echo 8282 ;;
+        influxdb3-enterprise) echo 8181 ;;
+        *)                    echo "" ;;
+    esac
+}
 
 echo ""
-echo "From the Mac, test with:"
-echo "    curl -s http://dockerhost.local:8282/health"
+echo "Health (from inside WSL):"
+for s in $SERVICES; do
+    hp="$(health_port "$s")"
+    if [[ -z "$hp" ]]; then
+        echo "  $s: no known health port; skipping"
+        continue
+    fi
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://localhost:${hp}/health" || echo 000)"
+    case "$code" in
+        200) echo "  OK:   $s healthy on :$hp" ;;
+        401) echo "  OK:   $s up on :$hp (401 = auth required, expected)" ;;
+        000) echo "  WARN: $s on :$hp not responding yet; give it 10s and retry" ;;
+        *)   echo "  WARN: $s on :$hp returned HTTP $code; check 'docker compose logs $s'" ;;
+    esac
+done
