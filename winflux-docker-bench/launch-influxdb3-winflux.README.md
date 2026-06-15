@@ -49,8 +49,8 @@ Defaults assume the standard setup; override via environment if needed:
 | `HOST`        | `winflux`                            | `~/.ssh/config` alias for the Windows host |
 | `DISTRO`      | `Ubuntu-24.04`                       | WSL distro name                            |
 | `LOCAL_PORT`  | `8282`                               | Local + host port for Core                 |
-| `ORG`         | `influxdata`                         | Passed to the host's `bring_up_influx.sh`  |
-| `STACK_REPO`  | `docs-tooling`                       | Repo dir holding the compose file          |
+| `ORG`         | `your-org`                           | Passed to the host's `bring_up_influx.sh`  |
+| `STACK_REPO`  | `your-stack-repo`                    | Repo dir holding the compose file          |
 | `TOKEN_FILE`  | `~/.influxdb3-core-admin-token.json` | Where the token lands on the Mac           |
 
 ## Prerequisites
@@ -85,7 +85,7 @@ Defaults assume the standard setup; override via environment if needed:
 
 - **Bring-up step errors** — most often the host's `bring_up_influx.sh` is
   missing or still has placeholder `ORG`/`STACK_REPO` defaults. Override them:
-  `ORG=influxdata STACK_REPO=docs-tooling ./launch-influxdb3-winflux.sh`.
+  `ORG=your-org STACK_REPO=your-stack-repo ./launch-influxdb3-winflux.sh`.
 - **`winflux.local` won't resolve** — try the host's LAN IP as `HostName`, or
   add a DHCP reservation so the IP doesn't rotate.
 - **Token parse warning** — confirm `~/.influxdb3-core-admin-token.json` on the

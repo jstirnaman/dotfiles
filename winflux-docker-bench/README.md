@@ -33,7 +33,7 @@ needed to make the Windows side useful.
 - Runs Docker containers (InfluxDB 3 Core / Enterprise, InfluxDB 2, Hugo dev
   server, pytest stacks) so the MacBook can stay free of Docker pressure.
 - Hosts WSL2 Ubuntu 24.04 as the Linux work surface; the Mac SSHes into it.
-- Offloads docs-tooling / docs work from the upstream docs repos.
+- Offloads container-heavy work from the primary workstation.
 
 What it does **not** do (yet, by design):
 

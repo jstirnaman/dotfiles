@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bring up the docs-tooling compose stack (InfluxDB 3 Core) on the host.
+# Bring up your stack's compose services (InfluxDB 3 Core) on the host.
 # Run inside WSL2 Ubuntu (e.g., after `ssh dockerhost-wsl`).
 # Idempotent: safe to run anytime; already-running services are left alone.
 #
