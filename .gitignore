@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Python virtualenv / bundled env (machine-specific, do not track)
+env/
+__pycache__/
+*.py[cod]
+
+# Editor / local
+*.swp
+.idea/

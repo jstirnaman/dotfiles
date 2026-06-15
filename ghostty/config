@@ -1,0 +1,3 @@
+shell-integration = detect 
+# Launch Zellij by default
+command = __ZELLIJ_BIN__

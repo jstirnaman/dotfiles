@@ -1,0 +1,57 @@
+layout {
+  tab_template name="ws" {
+    pane size=1 borderless=true {
+      plugin location="tab-bar"
+    }
+    children
+    pane size=1 borderless=true {
+      plugin location="status-bar"
+    }
+  }
+  ws name="v1" split_direction="vertical" {
+    pane split_direction="horizontal" {
+      pane name="dar" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
+      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    }
+    pane name="review"
+  }
+  ws name="v3" split_direction="vertical" {
+    pane split_direction="horizontal" {
+      pane name="dar" cwd="__HOME__/Documents/github/influxdata/docs-tooling/dar"
+      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    }
+    pane name="review"
+  }
+  ws name="docs-research-agent" split_direction="vertical" {
+    pane split_direction="horizontal" {
+      pane name="docs-tooling" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
+      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    }
+    pane name="review"
+  }
+  ws name="docs-ui-arch" split_direction="vertical" {
+    pane name="code" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    pane name="review" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+  }
+  ws name="triage" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
+    pane name="code"
+    pane name="review"
+  }
+  ws name="reports" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
+    pane name="code"
+    pane name="review"
+  }
+  ws name="ref-archs" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/influxdb3-reference-architectures" {
+    pane name="code"
+    pane name="review"
+  }
+  ws name="mcp" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/influxdb3_mcp_server" {
+    pane name="code"
+    pane name="review"
+  }
+  ws name="Background" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata" {
+    pane name="monitor-influxdb3-core"
+    pane name="monitor-influxdb3-ent"
+    pane name="monitor-influxdb1-ent"
+  }
+}
