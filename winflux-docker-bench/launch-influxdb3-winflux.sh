@@ -39,22 +39,20 @@ echo "==> Bringing up influxdb3-core on ${HOST} (WSL: ${DISTRO}) ..."
 ssh "$HOST" "wsl -d ${DISTRO} -- bash -lc \
   'ORG=${ORG} STACK_REPO=${STACK_REPO} ~/bin/bring_up_influx.sh'"
 
-# --- 2. pull the admin token to the Mac ------------------------------------
+# --- 2. pull the admin token to the Mac (best-effort, never fatal) ---------
 echo "==> Pulling Core admin token to ${TOKEN_FILE} ..."
 umask 077
-ssh "$HOST" "wsl -d ${DISTRO} -- bash -lc 'cat ${REMOTE_TOKEN_FILE}'" > "$TOKEN_FILE"
-chmod 600 "$TOKEN_FILE"
-
-# Extract the raw token (jq preferred, python3 fallback) for convenience.
-if command -v jq >/dev/null 2>&1; then
-  TOKEN="$(jq -r '.token' "$TOKEN_FILE")"
-elif command -v python3 >/dev/null 2>&1; then
-  TOKEN="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["token"])' "$TOKEN_FILE")"
+tmp="$(mktemp)"
+if ssh "$HOST" "wsl -d ${DISTRO} -- bash -c 'cat ${REMOTE_TOKEN_FILE}'" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+  mv "$tmp" "$TOKEN_FILE"
+  chmod 600 "$TOKEN_FILE"
+  echo "    token saved to ${TOKEN_FILE}"
 else
-  TOKEN=""
-fi
-if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
-  echo "WARN: could not parse token from ${TOKEN_FILE}; check the file contents." >&2
+  rm -f "$tmp"
+  echo "WARN: could not read ${REMOTE_TOKEN_FILE} on ${HOST}." >&2
+  echo "      Core may have no admin-token file yet, or it lives elsewhere." >&2
+  echo "      If so, set REMOTE_TOKEN_FILE=/path/to/token.json and re-run." >&2
+  echo "      Continuing — the tunnel will still come up." >&2
 fi
 
 # --- 3. open the tunnel ----------------------------------------------------
@@ -71,12 +69,15 @@ cat <<EOF
 
 Core is up and reachable at http://localhost:${LOCAL_PORT}
 
-Quick checks from the Mac:
-  curl -s http://localhost:${LOCAL_PORT}/health
+Quick checks from the Mac (the token file may be raw or JSON; this grabs the
+token either way):
+  TOKEN="\$(grep -ao 'apiv3_[A-Za-z0-9_-]*' ${TOKEN_FILE} | head -1)"
+
+  curl -s http://localhost:${LOCAL_PORT}/health -H "Authorization: Bearer \$TOKEN"
 
   influxdb3 query \\
     --host http://localhost:${LOCAL_PORT} \\
-    --token "\$(jq -r .token ${TOKEN_FILE})" \\
+    --token "\$TOKEN" \\
     --database <db> "SELECT 1"
 
 Tear down the tunnel when done:

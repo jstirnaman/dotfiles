@@ -32,11 +32,14 @@ Core publishes `8282:8181` on the host (host `8282` → container `8181`).
 After it runs, test from the Mac:
 
 ```bash
-curl -s http://localhost:8282/health
+# The token file may be a bare token string or JSON; this grabs the token either way.
+TOKEN="$(grep -ao 'apiv3_[A-Za-z0-9_-]*' ~/.influxdb3-core-admin-token.json | head -1)"
+
+curl -s http://localhost:8282/health -H "Authorization: Bearer $TOKEN"
 
 influxdb3 query \
   --host http://localhost:8282 \
-  --token "$(jq -r .token ~/.influxdb3-core-admin-token.json)" \
+  --token "$TOKEN" \
   --database <db> "SELECT 1"
 ```
 
@@ -88,7 +91,9 @@ Defaults assume the standard setup; override via environment if needed:
   `ORG=your-org STACK_REPO=your-stack-repo ./launch-influxdb3-winflux.sh`.
 - **`winflux.local` won't resolve** — try the host's LAN IP as `HostName`, or
   add a DHCP reservation so the IP doesn't rotate.
-- **Token parse warning** — confirm `~/.influxdb3-core-admin-token.json` on the
-  host is valid JSON of the form `{"token": "apiv3_...", "name": "_admin"}`.
+- **Token parse warning** — the host's token file can be either a bare
+  `apiv3_...` string or JSON (`{"token": "apiv3_...", "name": "_admin"}`); both
+  are fine. If it's missing, set `REMOTE_TOKEN_FILE=/path/to/token` to point at
+  the real location.
 - **Port already in use** — a previous tunnel is still up; the script reuses it.
   Use `--down` to close it first if you need a clean one.
