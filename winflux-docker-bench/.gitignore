@@ -1,0 +1,7 @@
+# Dated capture/log files — keep scripts, drop output
+*.log
+*-baseline-*.md
+ssh-troubleshoot-*.md
+test-tcp-path-*.log
+phase2-inventory-*.md
+tailscale.out
