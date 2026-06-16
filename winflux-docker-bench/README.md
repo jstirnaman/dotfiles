@@ -3,8 +3,10 @@
 A Windows 11 Pro laptop (16 GB RAM, quad-core Intel i7) configured as a
 Docker / InfluxDB testing host, reachable from a MacBook Pro over the home LAN.
 
-This README is the **Windows-side runbook**. Mac steps appear only where
-needed to make the Windows side useful.
+This README covers the whole bench: host setup (Windows PowerShell + WSL Ubuntu)
+and the Mac-side daily workflow. If you only want to *use* an already-set-up
+bench, jump to [Day-to-day operation](#day-to-day-operation) — the daily
+driver is one script on the Mac.
 
 > **Note:** These scripts are a sanitized template. Placeholders you must set
 > for your own environment:
@@ -17,9 +19,9 @@ needed to make the Windows side useful.
 
 ## Contents
 
-1. [What this machine does](#what-this-machine-does)
+1. [The two machines](#the-two-machines)
 2. [Current state](#current-state)
-3. [Files in this folder](#files-in-this-folder)
+3. [Scripts: what runs where](#scripts-what-runs-where)
 4. [Setup from scratch](#setup-from-scratch)
 5. [Day-to-day operation](#day-to-day-operation)
 6. [After a Windows reboot](#after-a-windows-reboot)
@@ -28,18 +30,38 @@ needed to make the Windows side useful.
 9. [Auto-restart options](#auto-restart-options)
 10. [Reverting to Tailscale (future)](#reverting-to-tailscale-future)
 
-## What this machine does
+## The two machines
+
+This bench spans two machines, and almost every "where do I run this?" question
+comes down to telling them apart. Two names are used consistently throughout:
+
+- **The host** — the Windows box (`dockerhost`), running Docker + WSL2 Ubuntu.
+- **The Mac** — the MacBook you drive it from.
+
+**Separation principle:** the host does the work; the Mac is the control surface.
+Containers, volumes, and all stateful Docker work live on the host. The Mac never
+runs Docker locally — it drives the host over SSH and reaches services through
+tunnels. When in doubt: heavy or stateful → host; commands and control → Mac.
+
+### The host (`dockerhost`)
 
 - Runs Docker containers (InfluxDB 3 Core / Enterprise, InfluxDB 2, Hugo dev
-  server, pytest stacks) so the MacBook can stay free of Docker pressure.
+  server, pytest stacks) so the Mac stays free of Docker pressure.
 - Hosts WSL2 Ubuntu 24.04 as the Linux work surface; the Mac SSHes into it.
-- Offloads container-heavy work from the primary workstation.
+- Offloads container-heavy work from the Mac.
 
-What it does **not** do (yet, by design):
+It does **not** (yet, by design):
 
-- No public internet exposure of any service.
-- No Tailscale-based management plane (deferred — see notes below).
-- No persistent always-on agent runtime.
+- Expose any service to the public internet.
+- Run a Tailscale-based management plane (deferred — see notes below).
+- Run a persistent always-on agent runtime.
+
+### The Mac
+
+- Holds the SSH keys and `~/.ssh/config` aliases (`dockerhost`, `dockerhost-wsl`).
+- Runs the daily launcher (`launch-influxdb3-winflux.sh`) — the only script you
+  run here.
+- Receives tokens pulled from the host and reaches Core/Enterprise over SSH tunnels.
 
 ## Current state
 
@@ -61,21 +83,54 @@ Mac side:
 - `~/.ssh/config` aliases `dockerhost` and `dockerhost-wsl` pointing at `dockerhost.local`.
 - Ed25519 public key copied into the admin-keys file on the host.
 
-## Files in this folder
+## Scripts: what runs where
 
-| File | Run as | Purpose |
+There are **three** places you run things. Keeping them straight is the whole game:
+
+| Where | Scripts | When |
 |---|---|---|
-| `phase0_baseline.ps1` | normal PS | Captures hardware/OS/Docker/SSH/Tailscale state to a dated markdown |
-| `phase1_install.ps1` | **admin PS** | Installs Ubuntu-24.04, `.wslconfig`, OpenSSH Server, key-only sshd_config, gh CLI |
-| `troubleshoot_ssh.ps1` | normal PS | Captures everything needed to debug SSH (sshd state, firewall, routing, admin-keys ACLs) |
-| `fix_ssh_access.ps1` | **admin PS** | Bakes Mac pubkey into admin-keys file with correct ACLs, widens firewall profile |
-| `switch_to_lan_ssh.ps1` | **admin PS** | Reconfigures sshd to listen on `0.0.0.0`, locks firewall to LAN `/24` |
-| `test_tcp_path.ps1` | **admin PS** | Used during troubleshooting; opens a listener on a non-22 port to bisect TCP-vs-SSH failures |
-| `phase2_inventory.sh` | bash in WSL | Clones your docs repos and catalogs all compose files into a markdown report |
-| `bring_up_influx.sh` | bash in WSL | Brings up InfluxDB 3 Core via compose; writes `.env` on first run; idempotent |
+| **Your Mac** (terminal) | `launch-influxdb3-winflux.sh` | Daily: bring up Core/Enterprise + open tunnels |
+| **Windows PowerShell** (on the host) | `phase0_baseline.ps1`, `phase1_install.ps1`, `fix_ssh_access.ps1`, `switch_to_lan_ssh.ps1`, `troubleshoot_ssh.ps1`, `test_tcp_path.ps1` | One-time setup + SSH troubleshooting |
+| **WSL Ubuntu** (on the host) | `install.sh`, `phase2_inventory.sh`, `bring_up_influx.sh` | One-time host setup; manual bring-up |
 
-All scripts are idempotent: safe to re-run, won't duplicate state. They write
-dated logs / output markdown next to themselves.
+### The daily driver (from the Mac)
+
+99% of the time, this is all you run:
+
+```bash
+cd ~/path/to/dotfiles/winflux-docker-bench
+./launch-influxdb3-winflux.sh            # Core only
+./launch-influxdb3-winflux.sh --both     # Core + Enterprise
+./launch-influxdb3-winflux.sh --down     # close tunnels
+```
+
+It SSHes to the host, brings up the selected services in WSL, pulls each token to
+the Mac, and opens a tunnel so `influxdb3`/`curl` work against `localhost`
+(Core `:8282`, Enterprise `:8181`). Full details in `launch-influxdb3-winflux.README.md`.
+
+> **Rule of thumb:** `launch-influxdb3-winflux.sh` is the *only* script you run
+> on the Mac. Everything else runs *on the host* — the `.ps1` files in Windows
+> PowerShell, the other `.sh` files in WSL. Running the Mac launcher on the host
+> just gives you `ssh: connect to host … Connection refused`.
+
+### Per-file reference
+
+| File | Runs on | Purpose |
+|---|---|---|
+| `launch-influxdb3-winflux.sh` | **Mac** | Daily one-shot: bring up Core/Enterprise on the host + pull token + open tunnel. Flags: `--core` (default), `--enterprise`, `--both`, `--down`. |
+| `launch-influxdb3-winflux.README.md` | — | Full docs for the Mac launcher. |
+| `install.sh` | **WSL** | Copies the WSL helper scripts into `~/bin` (run once after cloning or pulling the repo on the host). |
+| `bring_up_influx.sh` | **WSL** | Brings up InfluxDB 3 services via compose; idempotent. Honors `SERVICES="influxdb3-core influxdb3-enterprise"`. Preflights secret files + Enterprise license email, and auto-applies `compose.quay-rc.yaml` for quay images. This is what the Mac launcher calls over SSH. |
+| `compose.quay-rc.yaml` | **WSL** (overlay) | Compose overlay that clears the entrypoint so quay.io RC images run the base command verbatim. Auto-applied by `bring_up_influx.sh` when a quay image pin is detected. |
+| `phase2_inventory.sh` | **WSL** | Clones your repos and catalogs compose files into a markdown report. |
+| `phase0_baseline.ps1` | **Windows PS** | Captures hardware/OS/Docker/SSH/Tailscale state to a dated markdown. |
+| `phase1_install.ps1` | **Windows PS (admin)** | Installs Ubuntu-24.04, `.wslconfig`, OpenSSH Server, key-only sshd_config, gh CLI. |
+| `fix_ssh_access.ps1` | **Windows PS (admin)** | Bakes Mac pubkey into admin-keys file with correct ACLs; widens firewall profile. |
+| `switch_to_lan_ssh.ps1` | **Windows PS (admin)** | Reconfigures sshd to listen on `0.0.0.0`; locks firewall to LAN `/24`. |
+| `troubleshoot_ssh.ps1` | **Windows PS** | Captures sshd state, firewall, routing, admin-keys ACLs for debugging. |
+| `test_tcp_path.ps1` | **Windows PS (admin)** | Opens a listener on a non-22 port to bisect TCP-vs-SSH failures. |
+
+All scripts are idempotent: safe to re-run, won't duplicate state.
 
 ## Setup from scratch
 
@@ -127,38 +182,50 @@ If rebuilding from a clean Win 11 install:
    The script handles `gh auth` (interactive), clones the repos over HTTPS,
    and writes a compose inventory markdown.
 
-8. Bring up InfluxDB 3 Core:
+8. Install the WSL helper scripts into `~/bin`, then bring up InfluxDB 3:
 
    ```bash
-   bash "$(wslpath 'C:\Users\youruser\dotfiles\winflux-docker-bench')/bring_up_influx.sh"
+   cd "$(wslpath 'C:\Users\youruser\dotfiles\winflux-docker-bench')"
+   ./install.sh
+   SERVICES="influxdb3-core influxdb3-enterprise" ~/bin/bring_up_influx.sh
    ```
+
+   (Use just `influxdb3-core` in `SERVICES` if you don't need Enterprise yet.)
 
 ## Day-to-day operation
 
-Almost everything happens from the Mac via SSH. Two patterns:
+**The normal path: run the launcher from the Mac.** One command does bring-up,
+token pull, and tunnel:
 
 ```bash
-# Drop into the Windows shell on the host
-ssh dockerhost
-
-# Drop directly into WSL Ubuntu on the host
-ssh dockerhost-wsl
+cd ~/path/to/dotfiles/winflux-docker-bench
+./launch-influxdb3-winflux.sh            # Core only
+./launch-influxdb3-winflux.sh --both     # Core + Enterprise
+./launch-influxdb3-winflux.sh --down     # close tunnels when done
 ```
 
-Inside Ubuntu:
+Then query over the tunnel from the Mac (Core `:8282`, Enterprise `:8181`):
+
+```bash
+TOKEN="$(grep -ao 'apiv3_[A-Za-z0-9_-]*' ~/.influxdb3-core-admin-token.json | head -1)"
+curl -s http://localhost:8282/health -H "Authorization: Bearer $TOKEN"
+```
+
+**When you need to poke the host directly**, SSH in:
+
+```bash
+ssh dockerhost            # Windows shell on the host
+ssh dockerhost-wsl        # straight into WSL Ubuntu
+```
+
+Inside WSL, drive compose by hand or call the helper directly:
 
 ```bash
 cd ~/src/your-org/your-stack-repo
-docker compose ps                         # what's running
-docker compose logs -f influxdb3-core     # tail logs
-docker compose down                       # stop the stack
-docker compose up -d influxdb3-core       # start it again
-```
-
-From the Mac (after Core is up), poke its HTTP API:
-
-```bash
-curl -s http://dockerhost.local:8282/health
+docker compose ps                                          # what's running
+docker compose logs -f influxdb3-core                      # tail logs
+SERVICES="influxdb3-core influxdb3-enterprise" ~/bin/bring_up_influx.sh
+docker compose down                                        # stop the stack
 ```
 
 Docker context over SSH (so `docker` on the Mac talks to the host engine):
@@ -176,16 +243,22 @@ docker context use default
 ## After a Windows reboot
 
 `sshd`, Tailscale, and Docker Desktop come back on their own (Automatic
-services / login startup). What you usually need to do:
+services / login startup). To bring the stack back, just run the launcher from
+the Mac:
 
 ```bash
-# From the Mac
+./launch-influxdb3-winflux.sh --both
+```
+
+Or, on the host directly:
+
+```bash
 ssh dockerhost-wsl
 ~/bin/bring_up_influx.sh
 ```
 
-That's it. The helper script waits for the Docker engine, brings up Core,
-prints status + recent logs, and runs a local health probe.
+The helper waits for the Docker engine, brings up the services, prints status +
+recent logs, and runs a per-service health probe.
 
 If you set up Task Scheduler auto-bring-up (see
 [Auto-restart options](#auto-restart-options)), even those two commands

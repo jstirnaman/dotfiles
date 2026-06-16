@@ -1,0 +1,19 @@
+# compose.quay-rc.yaml — overlay for running quay.io RC images.
+#
+# The quay RC images ship an entrypoint that already invokes `influxdb3`, so the
+# base compose `command: [influxdb3, serve, ...]` would run `influxdb3 influxdb3
+# serve` and fail. Clearing the entrypoint makes Docker run the base command
+# verbatim (`influxdb3 serve ...`) — which works for ANY image with influxdb3 on
+# PATH (quay RC or Docker Hub release), with no per-image command duplication.
+#
+# Applied automatically by bring_up_influx.sh when it detects a quay.io image pin
+# (or manually:  docker compose -f docker-compose.yml -f compose.quay-rc.yaml up).
+#
+# If your Compose version doesn't honor `entrypoint: []` to clear, use:
+#   entrypoint: ["/usr/bin/env"]
+# which execs the base command directly and works the same way.
+services:
+  influxdb3-core:
+    entrypoint: []
+  influxdb3-enterprise:
+    entrypoint: []

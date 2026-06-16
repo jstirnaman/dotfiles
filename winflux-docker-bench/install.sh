@@ -20,6 +20,7 @@ fi
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/bin"
 SCRIPTS=(bring_up_influx.sh phase2_inventory.sh)
+DATA_FILES=(compose.quay-rc.yaml)
 
 mkdir -p "$BIN_DIR"
 
@@ -29,6 +30,16 @@ for s in "${SCRIPTS[@]}"; do
         echo "installed $BIN_DIR/$s"
     else
         echo "WARN: $SRC_DIR/$s not found; skipped." >&2
+    fi
+done
+
+# Data files (non-executable) that the scripts reference at runtime.
+for f in "${DATA_FILES[@]}"; do
+    if [[ -f "$SRC_DIR/$f" ]]; then
+        install -m 0644 "$SRC_DIR/$f" "$BIN_DIR/$f"
+        echo "installed $BIN_DIR/$f"
+    else
+        echo "WARN: $SRC_DIR/$f not found; skipped." >&2
     fi
 done
 
