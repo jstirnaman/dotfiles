@@ -91,8 +91,16 @@ for e in "${EDITIONS[@]}"; do
     fi
 
     echo "==> [${e}] tunnel localhost:${p} -> ${HOST}:${p} ..."
-    if nc -z localhost "$p" 2>/dev/null; then
-        echo "    port ${p} already open; reusing existing tunnel."
+    if pgrep -f "ssh -f -N -L ${p}:localhost:${p} ${HOST}" >/dev/null 2>&1; then
+        echo "    tunnel already running; reusing."
+    elif lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
+        # Port is held by something that ISN'T our tunnel — e.g. a local
+        # container. Don't open a tunnel; requests would hit the local process
+        # (this is the "shadowed port" bug) and ssh -L couldn't bind anyway.
+        echo "WARN: localhost:${p} is already in use by a LOCAL process — not tunneling." >&2
+        echo "      Queries to localhost:${p} will hit that local process, NOT ${HOST}." >&2
+        lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | sed 's/^/      /' >&2
+        echo "      Free the port (e.g. 'docker stop <container>') and re-run." >&2
     else
         ssh -f -N -L "${p}:localhost:${p}" "$HOST"
         echo "    tunnel started in background."
