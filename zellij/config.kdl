@@ -172,6 +172,11 @@ keybinds clear-defaults=true {
         bind "Alt k" { MoveFocus "up"; }
         bind "Alt l" { MoveFocusOrTab "right"; }
         bind "Alt n" { NewPane; }
+        bind "Alt t" { NewTab; }
+        bind "Alt g" { Run "gh" "dash" { floating true; close_on_exit true; }; }
+        // Alt+Shift+G: quick-float lazygit. NOTE: opens in a fixed cwd, not the
+        // focused pane's repo. For repo-aware lazygit, run the `lg` shell alias.
+        bind "Alt Shift g" { Run "lazygit" { floating true; close_on_exit true; }; }
         bind "Alt o" { MoveTab "right"; }
         bind "Alt p" { TogglePaneInGroup; }
         bind "Alt Shift p" { ToggleGroupMarking; }
@@ -449,7 +454,9 @@ attach_to_session true
 // (Requires restart)
 // Default: true (if the host terminal supports it)
 // 
-// support_kitty_keyboard_protocol false
+// Disabled to mitigate Claude Code (Ink) cursor-position bouncing in panes.
+// Experimental; revert to default (commented out) if key handling regresses.
+support_kitty_keyboard_protocol false
 // Whether to make sure a local web server is running when a new Zellij session starts.
 // This web server will allow creating new sessions and attaching to existing ones that have
 // opted in to being shared in the browser.

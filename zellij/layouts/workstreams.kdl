@@ -1,3 +1,7 @@
+// Workstreams layout (rendered to ~/.config/zellij/layouts/ by install.sh; __HOME__ -> $HOME).
+// Simplified from 9 near-duplicate tabs to 4. lazygit is float-on-demand:
+// run `lg` in any pane to float lazygit in THAT pane's repo (cwd-aware), or
+// Alt+Shift+G for a quick float (opens in a fixed cwd — see config.kdl note).
 layout {
   tab_template name="ws" {
     pane size=1 borderless=true {
@@ -8,47 +12,31 @@ layout {
       plugin location="status-bar"
     }
   }
-  ws name="v1" split_direction="vertical" {
-    pane split_direction="horizontal" {
-      pane name="dar" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
-      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+
+  // Primary docs workstream: docs-tooling + docs-v2 side by side.
+  ws name="docs" focus=true split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
+    pane name="docs-tooling"
+    pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    pane name="agent" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
+  }
+
+  // PR triage / review — gh-dash (R = prr, a = Claude, A = Copilot, v = approve).
+  ws name="triage"  {
+    pane name="tooling-dash" command="gh" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
+      args "dash"
     }
-    pane name="review"
-  }
-  ws name="v3" split_direction="vertical" {
-    pane split_direction="horizontal" {
-      pane name="dar" cwd="__HOME__/Documents/github/influxdata/docs-tooling/dar"
-      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
+    pane name="docs-dash" command="gh" cwd="__HOME__/Documents/github/influxdata/docs-v2" {
+      args "dash"
     }
-    pane name="review"
+    pane name="agent" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
   }
-  ws name="docs-research-agent" split_direction="vertical" {
-    pane split_direction="horizontal" {
-      pane name="docs-tooling" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
-      pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
-    }
-    pane name="review"
+
+  // General code tab — cd into ref-archs, mcp, or any other repo as needed.
+  ws name="code" {
+    pane name="mcp" cwd="__HOME__/Documents/github/influxdata/influxdb3-mcp"
   }
-  ws name="docs-ui-arch" split_direction="vertical" {
-    pane name="code" cwd="__HOME__/Documents/github/influxdata/docs-v2"
-    pane name="review" cwd="__HOME__/Documents/github/influxdata/docs-v2"
-  }
-  ws name="triage" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
-    pane name="code"
-    pane name="review"
-  }
-  ws name="reports" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
-    pane name="code"
-    pane name="review"
-  }
-  ws name="ref-archs" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/influxdb3-reference-architectures" {
-    pane name="code"
-    pane name="review"
-  }
-  ws name="mcp" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/influxdb3_mcp_server" {
-    pane name="code"
-    pane name="review"
-  }
+
+  // Background monitors.
   ws name="Background" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata" {
     pane name="monitor-influxdb3-core"
     pane name="monitor-influxdb3-ent"

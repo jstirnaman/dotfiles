@@ -1,0 +1,42 @@
+# gh-dash — PR triage dashboard
+# Docs: https://gh-dash.dev/configuration/
+# Symlinked to ~/.config/gh-dash/config.yml by install.sh (no secrets here).
+
+prSections:
+  - title: Needs My Review
+    filters: is:open review-requested:@me
+  - title: My PRs
+    filters: is:open author:@me
+
+# Maps owner/* -> local clone path so checkout-style binds can find repos.
+# Wildcard keys REQUIRE a wildcard value (gh-dash glob rules). Add more owners as needed.
+repoPaths:
+  influxdata/*: ~/Documents/github/influxdata/*
+  jstirnaman/*: ~/Documents/github/jstirnaman/*
+
+keybindings:
+  prs:
+    # v -> approve (explicit, so the muscle-memory works regardless of defaults)
+    - key: v
+      builtin: approve
+
+    # R -> deep inline review in a floating pane: prr fetches the PR, opens it
+    #      in $EDITOR (nvim), and submits on save+quit. zellij run returns
+    #      immediately so the dashboard stays live underneath.
+    - key: R
+      name: review (prr)
+      command: >
+        zellij run --floating --close-on-exit --name "prr {{.PrNumber}}" --
+        prr-review {{.RepoName}} {{.PrNumber}}
+
+    # a -> AI first pass with Claude Code over the PR diff, in a floating pane.
+    - key: a
+      name: AI review (Claude)
+      command: >
+        zellij run --floating --close-on-exit --name "ai {{.PrNumber}}" --
+        sh -c 'gh pr diff --repo {{.RepoName}} {{.PrNumber}} | claude -p "Review this diff. Flag bugs, security issues, missing tests, risky changes. Be concise."'
+
+    # A -> hand the review to Copilot instead of running anything locally.
+    - key: A
+      name: Copilot review
+      command: gh pr edit --repo {{.RepoName}} {{.PrNumber}} --add-reviewer @copilot

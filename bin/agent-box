@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# agent-box — low-ceremony, trusted-interactive agent container.
+#
+# One persistent container with your influxdata workspace mounted read-write and
+# your home left OFF (the only carve-out is ~/.claude, for auth + skills). The
+# container is the blast-radius jail: a runaway agent can trash the workspace
+# (git is your undo) but cannot touch the rest of your machine.
+#
+# No multiplexer inside — your host Zellij is the multiplexer. Exec a fresh agent
+# into the box from any pane; a second agent is just a second pane. Closing the
+# pane ends that session (use docs-tooling/docs-agent/bin/launch-dev.sh when you
+# need a detach/reattach tmux session instead).
+#
+# Edit on the HOST with your native editor — it's a bind mount, so the agent sees
+# your edits (and you see its) at the same paths. No copying.
+#
+#   agent-box                 # ensure the box is up; open a shell (in $PWD if under the workspace)
+#   agent-box claude [args]   # ensure the box is up; run claude (skip-permissions; safe inside the jail)
+#   agent-box run -- <cmd>    # run an arbitrary command in the box
+#   agent-box status          # show box state
+#   agent-box rm              # stop + remove the box (your files persist on the host)
+#
+# Override via env: AGENT_BOX_NAME, AGENT_IMAGE, AGENT_WORKSPACE, AGENT_SCRATCH,
+#                   AGENT_CLAUDE_HOME, AGENT_MEM
+set -euo pipefail
+
+NAME="${AGENT_BOX_NAME:-agent-box}"
+IMAGE="${AGENT_IMAGE:-docs-agent-dev:latest}"
+WORKSPACE="${AGENT_WORKSPACE:-$HOME/Documents/github/influxdata}"
+SCRATCH="${AGENT_SCRATCH:-$HOME/.cache/agent-box/scratch}"
+CLAUDE_HOME="${AGENT_CLAUDE_HOME:-$HOME/.claude}"   # the one deliberate home carve-out
+MEM="${AGENT_MEM:-4g}"
+
+die(){ printf 'agent-box: %s\n' "$*" >&2; exit 1; }
+command -v docker >/dev/null || die "docker not found on PATH"
+
+is_running(){ [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = "true" ]; }
+
+# Start in $PWD when it's inside the workspace (paths match — same bind-mount
+# absolute path), otherwise at the workspace root.
+workdir_for(){
+  case "$PWD/" in
+    "$WORKSPACE"/*) printf '%s' "$PWD" ;;
+    *)              printf '%s' "$WORKSPACE" ;;
+  esac
+}
+
+ensure_up(){
+  if docker container inspect "$NAME" >/dev/null 2>&1; then
+    is_running || docker start "$NAME" >/dev/null
+    return
+  fi
+  docker image inspect "$IMAGE" >/dev/null 2>&1 || die \
+    "image '$IMAGE' not found — build it:
+    (cd $HOME/Documents/github/influxdata/docs-tooling && docker build -t docs-agent-dev:latest -f docs-agent/Dockerfile.dev .)"
+  [ -d "$WORKSPACE" ] || die "workspace not found: $WORKSPACE"
+  mkdir -p "$SCRATCH"
+  # --user maps the host UID/GID so bind-mounted files keep correct ownership.
+  # Mount at the real host path so paths match host<->container and worktree
+  # git-common-dirs under <repo>.worktrees resolve. Bridge network = normal
+  # outbound (Anthropic API, gh, web); no host networking (a no-op on macOS).
+  docker run -d --name "$NAME" \
+    --user "$(id -u):$(id -g)" \
+    --network bridge \
+    --memory "$MEM" \
+    --entrypoint sleep \
+    -v "$WORKSPACE":"$WORKSPACE":rw \
+    -v "$SCRATCH":/scratch:rw \
+    -v "$CLAUDE_HOME":/home/claude/.claude:rw \
+    -w "$WORKSPACE" \
+    "$IMAGE" infinity >/dev/null
+  printf 'agent-box: started %s (image %s)\n' "$NAME" "$IMAGE" >&2
+}
+
+cmd="${1:-shell}"; [ $# -gt 0 ] && shift || true
+case "$cmd" in
+  shell)
+    ensure_up; exec docker exec -it -w "$(workdir_for)" "$NAME" bash ;;
+  claude)
+    ensure_up; exec docker exec -it -w "$(workdir_for)" "$NAME" \
+      claude --dangerously-skip-permissions "$@" ;;
+  run)
+    ensure_up; [ "${1:-}" = "--" ] && shift
+    [ $# -gt 0 ] || die "run needs a command: agent-box run -- <cmd>"
+    exec docker exec -it -w "$(workdir_for)" "$NAME" "$@" ;;
+  status)
+    docker ps -a --filter "name=^${NAME}$" \
+      --format 'table {{.Names}}\t{{.Status}}\t{{.RunningFor}}' ;;
+  rm|stop)
+    docker rm -f "$NAME" >/dev/null 2>&1 \
+      && echo "agent-box: removed $NAME (your files are safe on the host)" \
+      || echo "agent-box: no container $NAME" ;;
+  -h|--help)
+    sed -n '2,28p' "$0" ;;
+  *)
+    die "unknown command: $cmd (shell | claude | run | status | rm)" ;;
+esac

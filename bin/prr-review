@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# prr-review — fetch a PR review file, edit it, submit on save+quit.
+# usage: prr-review owner/repo 42
+# Symlinked to ~/.local/bin/prr-review by install.sh (ensure ~/.local/bin is on PATH).
+set -euo pipefail
+
+command -v prr >/dev/null || { echo "prr not installed — run: cargo install prr" >&2; exit 1; }
+
+if [[ $# -ne 2 ]]; then
+  echo "usage: prr-review owner/repo <pr-number>" >&2
+  exit 2
+fi
+
+repo="$1"; num="$2"
+# Must match `workdir` in ~/.config/prr/config.toml (prr layout: workdir/owner/repo/N.prr)
+file="$HOME/reviews/$repo/$num.prr"
+
+prr get "$repo/$num"
+"${EDITOR:-nvim}" "$file"
+prr submit "$repo/$num"

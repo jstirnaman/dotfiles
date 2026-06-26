@@ -39,12 +39,52 @@ render() {
   echo "rendered $dst <- $src"
 }
 
+link() {
+  local src="$1" dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  backup "$dst"
+  ln -s "$src" "$dst"
+  echo "linked $dst -> $src"
+}
+
 # Zellij
 render "$REPO/zellij/config.kdl"              "$CONFIG_HOME/zellij/config.kdl"
 render "$REPO/zellij/layouts/workstreams.kdl" "$CONFIG_HOME/zellij/layouts/workstreams.kdl"
+render "$REPO/zellij/layouts/review.kdl"      "$CONFIG_HOME/zellij/layouts/review.kdl"
 
 # Ghostty
 render "$REPO/ghostty/config" "$CONFIG_HOME/ghostty/config"
+
+# gh-dash (no secrets -> symlink so edits propagate live)
+link "$REPO/gh-dash/config.yml" "$CONFIG_HOME/gh-dash/config.yml"
+
+# prr-review wrapper -> ~/.local/bin (ensure this is on your PATH)
+link "$REPO/bin/prr-review" "$HOME/.local/bin/prr-review"
+
+# agent-box: trusted-interactive agent container launcher -> ~/.local/bin
+link "$REPO/bin/agent-box" "$HOME/.local/bin/agent-box"
+
+# prr config: rendered (NOT symlinked) because it holds a token.
+# Token is pulled from `gh auth token` at install time; the repo only stores a
+# placeholder. An existing real token is left untouched.
+prr_dst="$CONFIG_HOME/prr/config.toml"
+if [[ -f "$prr_dst" ]] && grep -q '^token' "$prr_dst" && ! grep -q '__GITHUB_TOKEN__' "$prr_dst"; then
+  echo "prr config already present with a token -> leaving $prr_dst untouched"
+else
+  prr_token="$(gh auth token 2>/dev/null || true)"
+  if [[ -z "$prr_token" ]]; then
+    echo "WARN: 'gh auth token' returned nothing. Writing placeholder; edit $prr_dst by hand."
+    prr_token="__GITHUB_TOKEN__"
+  fi
+  mkdir -p "$(dirname "$prr_dst")"
+  backup "$prr_dst"
+  sed -e "s|__HOME__|$HOME|g" \
+      -e "s|__GITHUB_TOKEN__|$prr_token|g" \
+      "$REPO/prr/config.toml.tmpl" > "$prr_dst"
+  chmod 600 "$prr_dst"
+  echo "rendered $prr_dst (chmod 600, token from gh)"
+fi
+mkdir -p "$HOME/reviews"
 
 # Claude config (symlinked, self-contained)
 if [[ -x "$REPO/claude/install.sh" ]]; then

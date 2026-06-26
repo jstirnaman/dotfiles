@@ -1,0 +1,11 @@
+// PR review environment: gh-dash in a single tab.
+// Launch with an EXPLICIT session name so it doesn't attach to the default
+// "default-workstreams" session (config.kdl sets session_name + attach_to_session):
+//   zellij -s review --layout review
+layout {
+    tab name="review" focus=true {
+        pane command="gh" {
+            args "dash"
+        }
+    }
+}

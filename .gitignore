@@ -9,3 +9,6 @@ __pycache__/
 # Editor / local
 *.swp
 .idea/
+
+# prr config is rendered to ~/.config with a real token; never commit it
+prr/config.toml
