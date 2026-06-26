@@ -1,0 +1,7 @@
+# wtcd <branch> — same as wt, then cd into the new worktree
+
+emulate -L zsh
+autoload -Uz wt
+
+local p
+p=$(wt "$1") && cd "$p"
