@@ -58,6 +58,9 @@ render "$REPO/ghostty/config" "$CONFIG_HOME/ghostty/config"
 # gh-dash (no secrets -> symlink so edits propagate live)
 link "$REPO/gh-dash/config.yml" "$CONFIG_HOME/gh-dash/config.yml"
 
+# neovim (no secrets -> symlink the whole config dir so edits propagate live)
+link "$REPO/nvim" "$CONFIG_HOME/nvim"
+
 # prr-review wrapper -> ~/.local/bin (ensure this is on your PATH)
 link "$REPO/bin/prr-review" "$HOME/.local/bin/prr-review"
 

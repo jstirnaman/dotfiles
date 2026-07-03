@@ -1,0 +1,29 @@
+# wtreap [repo_root] — remove all cattle whose branch merged into origin default.
+#   Only touches worktrees under ~/.worktrees (cattle), never slots. Prints a count.
+#
+#   CAVEAT: `merge-base --is-ancestor` detects merge/rebase merges, NOT squash-merges
+#   (GitHub's default). If you squash-merge PRs, swap the test marked below for the
+#   gh-based one, which keys death off the PR being MERGED.
+
+emulate -L zsh
+
+local root=${1:-$(git rev-parse --show-toplevel 2>/dev/null)}
+[[ -z $root ]] && { print -u2 "wtreap: not in a repo (pass a repo root)"; return 1 }
+
+local def n=0 wt br
+def=$(git -C "$root" symbolic-ref --quiet --short refs/remotes/origin/HEAD); def=${def#origin/}
+git -C "$root" fetch -qp origin
+
+git -C "$root" worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt; do
+  [[ $wt == $HOME/.worktrees/* ]] || continue          # only reap cattle, never slots
+  br=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null) || continue
+
+  # --- merge test (merge/rebase merges) ---
+  if git -C "$root" merge-base --is-ancestor "$br" "origin/$def" 2>/dev/null; then
+  # --- squash-merge test (swap the line above for this) ---
+  # if [[ $(gh pr view "$br" --json state -q .state 2>/dev/null) == MERGED ]]; then
+    git -C "$root" worktree remove --force "$wt" && git -C "$root" branch -D "$br" 2>/dev/null && (( n++ ))
+  fi
+done
+
+print "wtreap: removed $n merged worktree(s)."

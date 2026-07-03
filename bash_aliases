@@ -11,3 +11,10 @@ lg() {
     lazygit "$@"
   fi
 }
+
+# zsh only (bash skips this): autoload every function file in the dotfiles
+# zsh/functions dir, so adding a new file there needs no registration step.
+# Names resolve lazily against $fpath, which ~/.zshrc sets to this same dir.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  autoload -Uz $DOTFILES/zsh/functions/*(.:t)
+fi

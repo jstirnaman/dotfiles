@@ -1,0 +1,11 @@
+# wtrm [path] — remove one cattle worktree; delete its branch only if merged.
+#   Defaults to the current worktree. Refuses to delete an unmerged branch.
+
+emulate -L zsh
+
+local target=${1:-$PWD} wt_root br
+wt_root=$(git -C "$target" rev-parse --show-toplevel 2>/dev/null) || { print -u2 "wtrm: not a worktree"; return 1 }
+br=$(git -C "$wt_root" rev-parse --abbrev-ref HEAD)
+[[ $PWD == $wt_root* ]] && cd "$HOME"
+git worktree remove "$wt_root" 2>/dev/null || git worktree remove --force "$wt_root"
+git branch -d "$br" 2>/dev/null || print -u2 "wtrm: branch '$br' not merged — kept."
