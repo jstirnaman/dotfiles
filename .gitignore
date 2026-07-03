@@ -12,3 +12,11 @@ __pycache__/
 
 # prr config is rendered to ~/.config with a real token; never commit it
 prr/config.toml
+
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+.netrc
