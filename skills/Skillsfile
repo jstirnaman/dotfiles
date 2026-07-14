@@ -1,0 +1,40 @@
+# Skillsfile — declarative list of preferred agent skills.
+# Installed by ./install-skills.sh. Each line: skill <method> <args…>
+#
+# Methods:
+#   npx <repo>                     npx skills@latest add <repo>
+#   uv <package>                   uv tool install <package>
+#   curl-bash <url>                curl -fsSL <url> | bash        (runs remote code)
+#   raw <name> <url>               fetch a SKILL.md -> ~/.claude/skills/<name>/
+#   git-run <repo> <dest> <setup>  clone, then run <setup> in <dest>  (runs code)
+#   git-cmd <repo> <cmd>           clone into skills dir, then run <cmd>  (runs code)
+#   git-clone <repo>               clone into skills dir (no build step)
+#   graphify-fixup                 patch bare graphify-out -> .graphify-out
+#
+# These are examples — edit to taste. Verify each source; a couple of these
+# repos/URLs may be placeholders.
+
+# TDD + code-review skills (adds /grill-me, /tdd, …)
+skill npx "mattpocock/skills"
+
+# Surface unknowns — a single SKILL.md fetched from GitHub
+skill raw "brainstorm" "https://github.com/indigoai-us/hq-core/blob/main/.claude/skills/brainstorm/SKILL.md"
+
+# /caveman — save tokens (remote install script)
+skill curl-bash "https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh"
+
+# gstack — turns one agent into a virtual startup (clone + ./setup)
+skill git-run "https://github.com/garrytan/gstack.git" "$HOME/.claude/skills/gstack" "./setup"
+
+# graphifyy — map your codebase to save tokens
+skill uv "graphifyy"
+
+# patch upstream's inconsistent graphify-out / .graphify-out paths
+skill graphify-fixup
+
+# gbrain — memory layer for Claude Code (clone + bun)
+skill git-cmd "https://github.com/garrytan/gbrain.git" "bun install && bun link gbrain && gbrain init"
+
+# SkillSpector — scan skills for security risks.
+# Install this first (a plain run), then re-run with --scan to gate the rest.
+skill git-clone "https://github.com/NVIDIA/skillspector"
