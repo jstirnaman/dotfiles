@@ -1,5 +1,6 @@
 # wtreap [repo_root] — remove all cattle whose branch merged into origin default.
-#   Only touches worktrees under ~/.worktrees (cattle), never slots. Prints a count.
+#   Only touches worktrees under ~/worktrees or ~/.worktrees (cattle), never slots.
+#   Prints a count.
 #
 #   CAVEAT: `merge-base --is-ancestor` detects merge/rebase merges, NOT squash-merges
 #   (GitHub's default). If you squash-merge PRs, swap the test marked below for the
@@ -15,7 +16,8 @@ def=$(git -C "$root" symbolic-ref --quiet --short refs/remotes/origin/HEAD); def
 git -C "$root" fetch -qp origin
 
 git -C "$root" worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt; do
-  [[ $wt == $HOME/.worktrees/* ]] || continue          # only reap cattle, never slots
+  [[ $wt == "$HOME/worktrees/"* || $wt == "$HOME/.worktrees/"* ]] || continue
+                                                        # only reap cattle, never slots
   br=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null) || continue
 
   # --- merge test (merge/rebase merges) ---
