@@ -31,6 +31,7 @@ separate OS window.
 | `workstreams` | Open the main session (docs / code / background tabs). |
 | neovim + telescope + auto-session | Editor that spans repos and restores state. |
 | gh-dash + prr | PR triage (`Alt g` floats it) and editor-native reviews. |
+| revdiff | Editor-native reviews of local diffs. |
 | git worktrees + `wt`/`wtpick`/`wtrm`/`wtreap` | Slot-vs-cattle worktrees. |
 | docker compose | Runs InfluxDB/Telegraf as services. |
 | `~/dotfiles` + `install.sh` | Source of truth for the configs above. |
