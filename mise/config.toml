@@ -1,0 +1,12 @@
+# Global mise config -> symlinked to ~/.config/mise/config.toml by install.sh.
+# Tool versions here apply everywhere; a per-project mise.toml overrides them,
+# and mise also reads .nvmrc / .node-version, so existing per-repo pins keep
+# working.
+#
+# To retire nvm: uncomment `node` below, add `eval "$(mise activate zsh)"` to
+# ~/.zshrc, delete the two nvm lines there, then run `mise install`.
+
+[tools]
+node = "22"
+go = "latest"
+python = "latest"

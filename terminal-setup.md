@@ -2,21 +2,21 @@
 
 Zellij + Ghostty + neovim + gh-dash, tuned for cross-repo projects and always-on services. Companion to the worktree doctrine in [`zsh/README.md`](zsh/README.md).
 
-## 1. Sessionizer targets the parent workspace, not a repo
+## 1. Sessionizer jumps to a repo or a defined project
 
-Install zoxide + zellij-smart-sessionizer and bind one key to it. Point it at **parent dirs**, e.g. `~/Documents/github/influxdata/`, not individual repos. One project = one session over the parent. (Targeting single repos splits a cross-repo project across multiple sessions — the scatter just moves.)
+Install zoxide + zellij-smart-sessionizer and bind one key to it. Point a session at the repo you're actually working (`docs`, `zs`), or at a defined cross-repo set (`proj <name> <repos…>`) — not at the parent-of-everything. The parent `~/Documents/github/influxdata/` is where zoxide indexes and where shared tooling lives (Section 3), but it's too broad to be a session or editor root: rooting there sweeps every clone into one workspace.
 
 ## 2. Cross-repo projects: one session, tabs by activity
 
 Give each project a layout KDL and organize its tabs by *activity* — editor, PRs, shell — **not one tab per repo**. Then:
 
-- One neovim launched from the parent (`cd ~/Documents/github/influxdata && nvim .`) spans every repo. Telescope (the neovim fuzzy-finder plugin, `telescope.nvim`) searches recursively from where you launched: `find_files` opens any file by name and `live_grep` jumps to any line by its text — across all the repos at once, so you switch repos by fuzzy-finding, not tab-toggling.
+- Root neovim at the repo you're working (`cd <repo> && nvim .`), not the parent — Telescope (`telescope.nvim`) then searches just that repo, focused and fast. To reach a sibling repo when a task needs it, give Telescope `search_dirs` for that path, or open a picker result straight into an nvim split (`Ctrl-v` / `Ctrl-x`). That keeps the common case focused and makes cross-repo an on-demand reach, not a permanent sweep across every clone.
 - gh-dash scoped to the project's repos shows their PRs in one view.
 - Cross-*branch* work → git worktrees (see the doctrine). Cattle live in `~/.worktrees/<repo>/`.
 
-## 3. Shared env at the parent
+## 3. Shared tooling and env at the parent
 
-Put `direnv` or `mise` at `~/Documents/github/influxdata/` so `INFLUX_*` / tokens / org load once across every repo, instead of per-repo drift.
+One `.envrc` at `~/Documents/github/influxdata/` covers every repo beneath it — direnv walks up from wherever you are and loads the nearest ancestor `.envrc`. Use it to put shared tooling on PATH (e.g. `docs-tooling`) and shared env (`INFLUX_*`, `ORG`) in one place, available across all clones. This is the parent's real job: tooling *scope*, not editor root. Keep the `.envrc` only at the parent — a repo-level one overrides it unless it calls `source_up`.
 
 ## 4. Services run under docker, never as Zellij panes
 
@@ -38,7 +38,7 @@ The "background" Zellij session is **monitoring-only** — `docker compose logs 
 | PR/issue focus | gh-dash, scoped per project |
 | Worktree lifecycle | git worktree + `wt`/`wtrm`/`wtreap` |
 | Branch movement | git switch / restore |
-| Per-project env | direnv or mise (at parent) |
+| Shared tooling/env | direnv `.envrc` at the parent (covers all repos below) |
 | Services | docker compose (not panes) |
 | Durable layouts | Zellij session serialization |
 

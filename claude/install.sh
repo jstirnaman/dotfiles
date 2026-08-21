@@ -30,4 +30,11 @@ for d in "$REPO"/skills/*/; do
   link "$d" "$DEST/skills/$name"
 done
 
+# Disable mouse-click focus stealing in Claude Code TUI (~/.zshenv, read by every zsh)
+ZSHENV="$HOME/.zshenv"
+if ! grep -q '^export CLAUDE_CODE_DISABLE_MOUSE_CLICKS=' "$ZSHENV" 2>/dev/null; then
+  echo 'export CLAUDE_CODE_DISABLE_MOUSE_CLICKS=1' >> "$ZSHENV"
+  echo "added CLAUDE_CODE_DISABLE_MOUSE_CLICKS=1 to $ZSHENV"
+fi
+
 echo "done."

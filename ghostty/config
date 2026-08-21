@@ -1,3 +1,2 @@
 shell-integration = detect 
-# Launch Zellij by default
-command = __ZELLIJ_BIN__
+# Plain shell by default; enter Zellij on demand with `zs` or `proj`.

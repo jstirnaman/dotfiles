@@ -1,5 +1,5 @@
-# wt [branch] — create an EPHEMERAL (cattle) worktree, hidden, born to be reaped.
-#   ~/.worktrees/<repo>/<branch>  (a dir you never browse)
+# wt [branch] — create an EPHEMERAL (cattle) worktree, born to be reaped.
+#   ~/worktrees/<repo>/<branch>  (a visible path for people and agent UIs)
 #   New branch off origin's default. No name given => machine-named throwaway.
 #   Cattle have a death condition: reap with `wtreap`, remove one with `wtrm`.
 
@@ -13,7 +13,7 @@ def=$(git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 
 
 branch=${1:-wip/$(date +%m%d-%H%M)}          # unnamed => don't bond with it
 dir=${branch//\//-}
-base=$HOME/.worktrees/$repo
+base=$HOME/worktrees/$repo
 mkdir -p "$base"
 wt_path=$base/$dir
 [[ -e $wt_path ]] && { print -u2 "wt: exists: $wt_path"; return 1 }

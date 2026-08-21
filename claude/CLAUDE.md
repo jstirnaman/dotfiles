@@ -77,3 +77,6 @@ The detailed, context-specific standards load on demand as skills. Apply the rel
 - **rust-standards** — any Rust work. Style, type design, Cargo lints, optimization.
 - **shell-scripting-standards** — writing or editing shell/bash scripts. `set -euo pipefail`, shellcheck, shfmt.
 - **github-actions-standards** — editing GitHub Actions workflows. SHA pinning, zizmor, Dependabot.
+# graphify
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.

@@ -397,13 +397,16 @@ default_layout "workstreams"
 // Default: <RANDOM>
 // 
 // session_name "My singleton session"
-session_name "default-workstreams"
+// Disabled: singleton-session mode conflicts with per-project sessions from
+// zs/proj/workstreams. Leave unset so bare `zellij` creates a fresh session.
+// session_name "default-workstreams"
  
 // When `session_name` is provided, attaches to that session
 // if it is already running or creates it otherwise.
 // Default: false
-// 
-attach_to_session true
+//
+// Disabled with session_name above — see note there.
+// attach_to_session true
  
 // Toggle between having Zellij lay out panes according to a predefined set of layouts whenever possible
 // Options:

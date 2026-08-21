@@ -1,0 +1,27 @@
+# workstreams — open (or reattach) the main session (3 tabs: docs / mcp /
+# background). gh-dash is not a tab — float it with Alt+g.
+#
+# Creates the session DETACHED first, then attaches, so it always comes up
+# through the reattach path. This sidesteps the zellij + Ghostty
+# kitty-keyboard-protocol race where a freshly-attached session starts with
+# dead keyboard input until a re-render (zellij-org/zellij#3917). Detach +
+# reattach forces that re-render, so going straight to attach avoids the dead
+# first frame.
+
+emulate -L zsh
+
+local session=main
+
+if [[ -n ${ZELLIJ:-} ]]; then
+  print -u2 "workstreams: already inside a Zellij session — run this from a plain shell."
+  return 1
+fi
+
+# Create detached if it doesn't exist yet. --create-background uses the
+# default_layout from config.kdl, which is "workstreams".
+if ! zellij list-sessions --no-formatting 2>/dev/null | awk '{print $1}' | grep -qxF -- "$session"; then
+  zellij attach --create-background "$session"
+fi
+
+# Attach (also resurrects an EXITED session). Always the reattach path.
+zellij attach "$session"

@@ -32,6 +32,8 @@ Plugin 'L9'
 Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
 Plugin 'godlygeek/tabular'
 Plugin 'plasticboy/vim-markdown'
+" Syntax highlighting and folding for prr pull-request review files.
+Plugin 'danobi/prr', {'rtp': 'vim/'}
 " Avoid a name conflict with L9
 Plugin 'jstirnaman/L9', {'name': 'newL9'}
 Plugin 'thoughtbot/vim-rspec'
@@ -57,6 +59,22 @@ filetype plugin indent on    " required
 
 " Syntax
 syntax on
+
+" Make prr review-file additions, removals, and delimiters easier to scan.
+augroup Prr
+  autocmd!
+  autocmd BufRead,BufNewFile *.prr set syntax=on
+  autocmd BufRead,BufNewFile *.prr hi! link prrAdded Function
+  autocmd BufRead,BufNewFile *.prr hi! link prrRemoved Keyword
+  autocmd BufRead,BufNewFile *.prr hi! link prrFile Special
+  autocmd BufRead,BufNewFile *.prr hi! link prrHeader Directory
+  autocmd BufRead,BufNewFile *.prr hi! link prrIndex Special
+  autocmd BufRead,BufNewFile *.prr hi! link prrChunk Special
+  autocmd BufRead,BufNewFile *.prr hi! link prrChunkH Special
+  autocmd BufRead,BufNewFile *.prr hi! link prrTagName Special
+  autocmd BufRead,BufNewFile *.prr hi! link prrResult Special
+augroup END
+
 set expandtab
 autocmd Filetype gitcommit setlocal spell textwidth=76
 autocmd Filetype html setlocal ts=2 sts=2 sw=2

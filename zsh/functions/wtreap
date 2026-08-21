@@ -1,5 +1,5 @@
 # wtreap [repo_root] — remove all cattle whose branch merged into origin default.
-#   Only touches worktrees under ~/worktrees or ~/.worktrees (cattle), never slots.
+#   Only touches cattle under ~/worktrees (or legacy ~/.worktrees), never slots.
 #   Prints a count.
 #
 #   CAVEAT: `merge-base --is-ancestor` detects merge/rebase merges, NOT squash-merges

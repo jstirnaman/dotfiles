@@ -1,0 +1,62 @@
+# proj <session> <repo> [repo...] — open (or reattach) a Zellij session that
+# spans several repos, one tab per repo. No per-project file: the session IS the
+# project, and the layout is generated on the fly. Repos are names under
+# $PROJ_BASE (default ~/Documents/github/influxdata) or absolute paths.
+#
+#   proj mcp-e2e influxdb3_mcp_server starfleet
+#   alias mcp-e2e='proj mcp-e2e influxdb3_mcp_server starfleet'   # for recurring ones
+
+emulate -L zsh
+
+local session=$1; shift
+if [[ -z $session || $# -eq 0 ]]; then
+  print -u2 "usage: proj <session> <repo> [repo...]"
+  return 2
+fi
+
+if [[ -n ${ZELLIJ:-} ]]; then
+  print -u2 "proj: already inside a Zellij session — run this from a plain shell."
+  return 1
+fi
+
+# Already running (or exited/resurrectable)? Just attach.
+if zellij list-sessions --no-formatting 2>/dev/null | awk '{print $1}' | grep -qxF -- "$session"; then
+  zellij attach "$session"
+  return
+fi
+
+local base=${PROJ_BASE:-$HOME/Documents/github/influxdata}
+local tmpdir; tmpdir=$(mktemp -d -t "proj-${session}") || return
+local tmp="$tmpdir/layout.kdl"
+
+{
+  print 'layout {'
+  print '  tab_template name="ws" {'
+  print '    pane size=1 borderless=true {'
+  print '      plugin location="tab-bar"'
+  print '    }'
+  print '    children'
+  print '    pane size=1 borderless=true {'
+  print '      plugin location="status-bar"'
+  print '    }'
+  print '  }'
+  local first=1 repo dir
+  for repo in "$@"; do
+    [[ $repo == /* ]] && dir=$repo || dir=$base/$repo
+    [[ -d $dir ]] || print -u2 "proj: warning: $dir does not exist"
+    if (( first )); then
+      print "  ws name=\"${repo:t}\" focus=true cwd=\"$dir\" {"
+      first=0
+    else
+      print "  ws name=\"${repo:t}\" cwd=\"$dir\" {"
+    fi
+    print '    pane'
+    print '  }'
+  done
+  print '}'
+} > "$tmp"
+
+# NOTE: `zellij -l LAYOUT -s NAME` is broken (zellij-org/zellij#3734 — errors
+# "There is no active session!"). Use --new-session-with-layout instead.
+zellij --new-session-with-layout "$tmp" --session "$session"
+command rm -rf "$tmpdir"

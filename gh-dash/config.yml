@@ -1,6 +1,6 @@
 # gh-dash — PR triage dashboard
 # Docs: https://gh-dash.dev/configuration/
-# Symlinked to ~/.config/gh-dash/config.yml by install.sh (no secrets here).
+# Rendered to ~/.config/gh-dash/config.yml by install.sh (re-run after edits). No secrets here.
 
 prSections:
   - title: Needs My Review
@@ -11,8 +11,8 @@ prSections:
 # Maps owner/* -> local clone path so checkout-style binds can find repos.
 # Wildcard keys REQUIRE a wildcard value (gh-dash glob rules). Add more owners as needed.
 repoPaths:
-  influxdata/*: ~/Documents/github/influxdata/*
-  jstirnaman/*: ~/Documents/github/jstirnaman/*
+  influxdata/*: __INFLUXDATA__/*
+  jstirnaman/*: __HOME__/Documents/github/jstirnaman/*
 
 keybindings:
   prs:

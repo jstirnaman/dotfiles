@@ -21,9 +21,10 @@ Say it out loud: **slot or cattle?**
 - Count never grows; branches rotate through with `git switch`.
 - Stable paths, so sessionizer and muscle memory hold.
 
-## Cattle — many, invisible, disposable
+## Cattle — many, discoverable, disposable
 
-- Live in `~/.worktrees/<repo>/…`, a dir I never browse.
+- Live in `~/worktrees/<repo>/…`: visible so people and agent UIs can open or
+  receive their paths without having to expose hidden files.
 - Machine-named if I don't care. No naming ritual.
 - Die when their branch merges (`wtreap`).
 - Re-enter via picker (`wtpick`), never by memory.

@@ -3,7 +3,7 @@
 Deploy everything with the installer:
 
 ```sh
-cd ~/Documents/github/jstirnaman/dotfiles && ./install.sh
+cd ~/dotfiles && ./install.sh
 ```
 
 `install.sh` is idempotent (it backs up anything it replaces). It:
@@ -19,7 +19,7 @@ cd ~/Documents/github/jstirnaman/dotfiles && ./install.sh
 After deploying, restart Zellij fresh so config/layout changes load:
 
 ```sh
-zellij delete-session default-workstreams
+zellij delete-session main
 ```
 
 ## Prerequisites
@@ -30,7 +30,8 @@ zellij delete-session default-workstreams
 
 ### PR triage flow (gh-dash + prr)
 
-The `triage` Zellij tab runs [gh-dash](https://gh-dash.dev). To make it work:
+`Alt g` floats [gh-dash](https://gh-dash.dev) in the focused pane's repo (bound
+in `zellij/config.kdl`). To make it work:
 
 ```sh
 gh extension install dlvhdr/gh-dash   # the dashboard
@@ -48,6 +49,16 @@ Caveats to verify on first use:
   `~/.config/prr/config.toml`.
 - The `a` keybind pipes `gh pr diff … | claude -p "…"`; confirm the non-interactive
   flag against current Claude Code docs.
+
+# Neovim finder (Telescope)
+
+Leader is `<Space>`:
+
+- `<Space>ff` — find files by name
+- `<Space>fg` — live grep across file contents (needs `ripgrep`)
+
+Both search recursively from nvim's working dir, so launch nvim at a parent dir
+to reach every repo under it. Also `<Space>fb` (buffers), `<Space>fh` (help).
 
 # Shell aliases
 

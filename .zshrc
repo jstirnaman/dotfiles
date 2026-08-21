@@ -14,18 +14,12 @@ fi
 # ============================================================================
 # ZELLIJ PERSISTENT SESSION SETUP
 # ============================================================================
-
-# Source pane state functions
-#source ~/.local/bin/zellij-pane-state.sh
-
-# On pane startup, restore previous PWD and git branch
-#if [[ -n "$ZELLIJ_PANE_ID" ]]; then
-#  pane_restore
-#fi
-
-# After every prompt, record current PWD and git branch
-# This ensures state is always up-to-date
-#precmd_functions+=(pane_record)
+# Removed: custom pane_record/pane_restore (bin/zellij-pane-state.sh) keyed
+# cwd/branch state by $ZELLIJ_PANE_ID, a small integer zellij reuses across
+# different sessions — new panes silently inherited stale cwd from unrelated
+# sessions' pane 0/1/2, clobbering layout-defined `cwd=`. Zellij's own
+# session_serialization (see zellij/config.kdl) already does this correctly,
+# scoped per session, restoring cwd/branch on `zellij attach`.
 
 # ============================================================================
 # AUTO-LAUNCH ZELLIJ (optional but recommended)

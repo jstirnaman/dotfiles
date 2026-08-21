@@ -21,11 +21,11 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- Auto-import every spec in lua/plugins, but skip macOS AppleDouble "._*"
--- sidecar files. They appear because this repo lives on an exFAT/FUSE drive
--- that can't store extended attributes, so lazy would otherwise try to execute
--- "._telescope.lua" as Lua and fail. Moving the repo to internal (APFS) storage
--- would make this guard unnecessary.
+-- Auto-import every spec in lua/plugins, skipping any macOS AppleDouble "._*"
+-- sidecar files. The repo now lives on internal APFS storage so these normally
+-- won't appear, but skipping them is cheap insurance against ever reading the
+-- config from an exFAT/FUSE drive, which manufactures "._telescope.lua" files
+-- that lazy would otherwise try to execute as Lua.
 local plugins_spec = {}
 for name, kind in vim.fs.dir(vim.fn.stdpath("config") .. "/lua/plugins") do
   if name:sub(1, 2) ~= "._" then
@@ -40,6 +40,10 @@ end
 -- Setup lazy.nvim
 require("lazy").setup({
   spec = plugins_spec,
+  -- No plugins here use luarocks, so disable it and skip the hererocks/lua5.1
+  -- bootstrap (clears the :checkhealth luarocks errors). Flip to enabled = true
+  -- if you ever add a plugin that requires rocks.
+  rocks = { enabled = false },
   -- colorscheme used while installing plugins
   install = { colorscheme = { "habamax" } },
   -- automatically check for plugin updates

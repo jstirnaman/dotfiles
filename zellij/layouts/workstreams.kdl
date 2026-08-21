@@ -1,7 +1,13 @@
-// Workstreams layout (rendered to ~/.config/zellij/layouts/ by install.sh; __HOME__ -> $HOME).
-// Simplified from 9 near-duplicate tabs to 4. lazygit is float-on-demand:
-// run `lg` in any pane to float lazygit in THAT pane's repo (cwd-aware), or
-// Alt+Shift+G for a quick float (opens in a fixed cwd — see config.kdl note).
+// Workstreams layout: single "main" session, 3 tabs. gh-dash is NOT a tab —
+// float it on demand with Alt+g (bound in config.kdl), cwd-aware to whichever
+// pane is focused.
+//
+// Launch (new session): zellij --new-session-with-layout workstreams -s main
+// (Plain `--session`+`--layout` together is broken on zellij 0.44 -
+// https://github.com/zellij-org/zellij/issues/3734 - use --new-session-with-layout instead.)
+// Attach: zellij attach main
+// Or just run the `workstreams` shell function (handles attach-or-create).
+
 layout {
   tab_template name="ws" {
     pane size=1 borderless=true {
@@ -13,33 +19,26 @@ layout {
     }
   }
 
-  // Primary docs workstream: docs-tooling + docs-v2 side by side.
-  ws name="docs" focus=true split_direction="vertical" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
+  // Docs workstream: docs-tooling + docs-v2 side by side, plus an agent pane.
+  ws name="docs" focus=true split_direction="vertical" cwd="__INFLUXDATA__/docs-tooling" {
     pane name="docs-tooling"
-    pane name="docs-v2" cwd="__HOME__/Documents/github/influxdata/docs-v2"
-    pane name="agent" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
+    pane name="DAR" cwd="__INFLUXDATA__/DAR"
+    pane name="docs-v2" cwd="__INFLUXDATA__/docs-v2"
+    pane name="agent" cwd="__INFLUXDATA__/docs-tooling"
   }
 
-  // PR triage / review — gh-dash (R = prr, a = Claude, A = Copilot, v = approve).
-  ws name="triage"  {
-    pane name="tooling-dash" command="gh" cwd="__HOME__/Documents/github/influxdata/docs-tooling" {
-      args "dash"
-    }
-    pane name="docs-dash" command="gh" cwd="__HOME__/Documents/github/influxdata/docs-v2" {
-      args "dash"
-    }
-    pane name="agent" cwd="__HOME__/Documents/github/influxdata/docs-tooling"
-  }
-
-  // General code tab — cd into ref-archs, mcp, or any other repo as needed.
-  ws name="code" {
-    pane name="mcp" cwd="__HOME__/Documents/github/influxdata/influxdb3-mcp"
+  // MCP server workstream.
+  ws name="mcp" split_direction="vertical" cwd="__INFLUXDATA__/influxdb3_mcp_server" {
+    pane name="mcp" cwd="__INFLUXDATA__/influxdb3_mcp_server"
+    pane name="mcp" cwd="__INFLUXDATA__/docs-tooling"
   }
 
   // Background monitors.
-  ws name="Background" split_direction="vertical" cwd="__HOME__/Documents/github/influxdata" {
+  ws name="background" split_direction="vertical" cwd="__INFLUXDATA__" {
     pane name="monitor-influxdb3-core"
     pane name="monitor-influxdb3-ent"
     pane name="monitor-influxdb1-ent"
+    pane name="monitor-influxdb2"
+    pane name="monitor-telegraf"
   }
 }
