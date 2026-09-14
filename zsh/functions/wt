@@ -1,11 +1,12 @@
-# wt [branch] — create an EPHEMERAL (cattle) worktree, born to be reaped.
+# wt [branch] [start] — create an EPHEMERAL (cattle) worktree, born to be reaped.
 #   ~/worktrees/<repo>/<branch>  (a visible path for people and agent UIs)
-#   New branch off origin's default. No name given => machine-named throwaway.
+#   New branch off <start> (any commit-ish), default origin's default branch.
+#   No name given (or "") => machine-named throwaway.
 #   Cattle have a death condition: reap with `wtreap`, remove one with `wtrm`.
 
 emulate -L zsh
 
-local repo_root repo def branch dir base wt_path
+local repo_root repo def branch start dir base wt_path
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || { print -u2 "wt: not in a git repo"; return 1 }
 repo=${repo_root:t}
 def=$(git -C "$repo_root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null); def=${def#origin/}
@@ -18,7 +19,8 @@ mkdir -p "$base"
 wt_path=$base/$dir
 [[ -e $wt_path ]] && { print -u2 "wt: exists: $wt_path"; return 1 }
 
-git -C "$repo_root" fetch -q origin "$def"
-git -C "$repo_root" worktree add -b "$branch" "$wt_path" "origin/$def" >/dev/null || return
+start=${2:-origin/$def}
+[[ -z $2 ]] && git -C "$repo_root" fetch -q origin "$def"
+git -C "$repo_root" worktree add -b "$branch" "$wt_path" "$start" >/dev/null || return
 
 print -r -- "$wt_path"
