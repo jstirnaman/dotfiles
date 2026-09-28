@@ -21,6 +21,13 @@ wt_path=$base/$dir
 
 start=${2:-origin/$def}
 [[ -z $2 ]] && git -C "$repo_root" fetch -q origin "$def"
-git -C "$repo_root" worktree add -b "$branch" "$wt_path" "$start" >/dev/null || return
+# Adopt a branch that already exists, locally or on origin; create it otherwise.
+if git -C "$repo_root" show-ref -q --verify "refs/heads/$branch"; then
+	git -C "$repo_root" worktree add "$wt_path" "$branch" >/dev/null || return
+elif git -C "$repo_root" show-ref -q --verify "refs/remotes/origin/$branch"; then
+	git -C "$repo_root" worktree add --track -b "$branch" "$wt_path" "origin/$branch" >/dev/null || return
+else
+	git -C "$repo_root" worktree add -b "$branch" "$wt_path" "$start" >/dev/null || return
+fi
 
 print -r -- "$wt_path"
