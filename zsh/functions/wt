@@ -1,6 +1,10 @@
 # wt [branch] [start] — create an EPHEMERAL (cattle) worktree, born to be reaped.
 #   ~/worktrees/<repo>/<branch>  (a visible path for people and agent UIs)
-#   New branch off <start> (any commit-ish), default origin's default branch.
+#   Adopts <branch> when it exists locally or as origin/<branch> (fetch it first
+#   if it was pushed from elsewhere); otherwise creates it off <start> (any
+#   commit-ish), default origin's default branch. <start> is ignored on adopt.
+#   An adopted branch is cattle too: `wtreap` deletes it once origin's default
+#   branch contains its tip.
 #   No name given (or "") => machine-named throwaway.
 #   Cattle have a death condition: reap with `wtreap`, remove one with `wtrm`.
 
@@ -22,6 +26,10 @@ wt_path=$base/$dir
 start=${2:-origin/$def}
 [[ -z $2 ]] && git -C "$repo_root" fetch -q origin "$def"
 # Adopt a branch that already exists, locally or on origin; create it otherwise.
+if [[ -n $2 ]] && { git -C "$repo_root" show-ref -q --verify "refs/heads/$branch" ||
+	git -C "$repo_root" show-ref -q --verify "refs/remotes/origin/$branch" }; then
+	print -u2 "wt: $branch exists; adopting it and ignoring start point $2"
+fi
 if git -C "$repo_root" show-ref -q --verify "refs/heads/$branch"; then
 	git -C "$repo_root" worktree add "$wt_path" "$branch" >/dev/null || return
 elif git -C "$repo_root" show-ref -q --verify "refs/remotes/origin/$branch"; then
