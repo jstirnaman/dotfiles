@@ -105,7 +105,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(dotenv git jsontools macos node python rust virtualenv) 
+plugins=(dotenv git jsontools macos node python rust virtualenv)
 
 # source $ZSH/oh-my-zsh.sh
 
@@ -141,6 +141,7 @@ plugins=(dotenv git jsontools macos node python rust virtualenv)
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 export PATH="$PATH:_HOME_/.influxdb/"
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 source ~/jstirnaman/dotfiles/bash_aliases
