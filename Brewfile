@@ -45,8 +45,6 @@ brew "glow"
 brew "go@1.23"
 # Gorgeous metric visualizations and dashboards for timeseries databases
 brew "grafana"
-# Post-modern modal text editor
-brew "helix"
 # Agent multiplexer that lives in your terminal
 brew "herdr"
 # Lightweight and flexible command-line JSON processor
