@@ -53,6 +53,8 @@ brew "herdr"
 brew "jq"
 # Simple terminal UI for git commands
 brew "lazygit"
+# Fast and powerful Git hooks manager for any type of projects
+brew "lefthook"
 # Fast, async, resource-friendly link checker
 brew "lychee"
 # Show markdown documents on text terminals
